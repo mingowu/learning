@@ -74,16 +74,6 @@ struct WaitUeContextRelease : public boost::msm::front::state<>
     };
 };
 
-struct isNotOk
-{
-    template <class Event, class Fsm, class SourceState, class TargetState>
-    bool operator()(const Event&, Fsm&, SourceState&, TargetState&)
-    {
-        std::cout << "unexpected message\n";
-        return true;
-    }
-};
-
 struct EndcService : public boost::msm::front::state_machine_def<EndcService>
 {
     using initial_state = Idle;
