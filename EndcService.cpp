@@ -27,14 +27,6 @@ struct Idle : public boost::msm::front::state<>
             p_fsm.processEvent(p_event);
         }
     };
-    struct handleUnexpectedMessage
-    {
-        template <class Event, class Fsm, class SourceState, class TargetState>
-        void operator()(const Event&, Fsm&, SourceState&, TargetState&)
-        {
-            std::cout << "unexpected Message\n";
-        }
-    };
 };
 
 struct WaitSgnbReconfComp : public boost::msm::front::state<>
