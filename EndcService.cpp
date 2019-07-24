@@ -27,6 +27,14 @@ struct Idle : public boost::msm::front::state<>
             p_fsm.processEvent(p_event);
         }
     };
+    struct handleUnexpectedMessage
+    {
+        template <class Event, class Fsm, class SourceState, class TargetState>
+        void operator()(const Event&, Fsm&, SourceState&, TargetState&)
+        {
+            std::cout << "unexpected Message\n";
+        }
+    };
 };
 
 struct WaitSgnbReconfComp : public boost::msm::front::state<>
@@ -79,12 +87,19 @@ struct EndcService : public boost::msm::front::state_machine_def<EndcService>
     using initial_state = Idle;
 
     struct transition_table : boost::mpl::vector<
-    //  Start                                        Event                        Target                Action                                             Guard
+        //                     Start                 Event                        Target                Action                                             Guard
         boost::msm::front::Row<Idle,                 SgnbAdditionRequest,         WaitSgnbReconfComp,   Idle::handleSgnbAdditionRequest,                   boost::msm::front::none>,
         boost::msm::front::Row<WaitSgnbReconfComp,   SgnbReconfigurationComplete, ScgActive,            WaitSgnbReconfComp::handleSgnbReconfComp,          boost::msm::front::none>,
         boost::msm::front::Row<ScgActive,            SgnbReleaseRequest,          WaitUeContextRelease, ScgActive::handleSgnbReleaseRequest,               boost::msm::front::none>,
         boost::msm::front::Row<ScgActive,            SgnbModificationRequest,     WaitSgnbReconfComp,   ScgActive::handleSgnbModificationRequest,          boost::msm::front::none>,
         boost::msm::front::Row<WaitUeContextRelease, UeContextRelease,            Idle,                 boost::msm::front::none,                           boost::msm::front::none>> {};
+
+    template <class FSM, class Event>
+    void no_transition(Event const& p_event, FSM&, int p_state)
+    {
+        std::cout << "no transition from state " << p_state
+                  << " on event " << typeid(p_event).name() << std::endl;
+    }
 
    void processEvent(const SgnbAdditionRequest&)
    {
@@ -126,10 +141,12 @@ void testEndcService()
 {
     std::list<X2Message> l_X2Messages = {
         SgnbAdditionRequest{},
+        UeContextRelease{},
         SgnbReconfigurationComplete{},
         SgnbModificationRequest{},
         SgnbReconfigurationComplete{},
         SgnbReleaseRequest{},
+        UeContextRelease{},
         UeContextRelease{}};
     X2MessageVisitor l_X2MessageVisitor{};
     for (const auto& l_X2Message : l_X2Messages)
